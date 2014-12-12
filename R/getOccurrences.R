@@ -88,13 +88,14 @@ getOccurrences <- function(tvks=NULL, datasets=NULL, startYear=NULL,
             ## find the unique names that are used in occ
             n <- unique(unlist(c(sapply(json, function(x) names(unlist(x))))))
             ## dimension a matrix for the required number of rows and cols
-            d <- matrix(nrow=length(json), ncol=length(n), 
-                        dimnames=list(seq(1:length(json)),n))
+            d <- matrix(nrow = length(json), ncol = length(n), 
+                        dimnames = list(seq(1:length(json)), n))
             ## now we can go through the list and insert
             ## the values into the correct cells of the matrix
             ## This should be quick because the matrix is pre-allocated
             ## The unlisting allows us to bring out the attributes fields
-            for (i in 1:length(json)) {
+            
+            for(i in 1:length(json)) {
                 for (j in 1:length(unlist(json[[i]]))) {
                     k <- grep(names(unlist(json[[i]])[j]),n)
                     d[i,k] <- unlist(json[[i]])[[j]]
@@ -107,7 +108,7 @@ getOccurrences <- function(tvks=NULL, datasets=NULL, startYear=NULL,
             if(is.null(d_master)){d_master <- d} else{d_master <- merge(d_master, d, all = TRUE)}
             
         }
-        
+
         start <- start + 2
         
     }#end of while
@@ -136,7 +137,7 @@ getOccurrences <- function(tvks=NULL, datasets=NULL, startYear=NULL,
     }
         
     ## Write out a statement about the T's & C's
-    if(!acceptTandC) message('IMPORTANT: https://data.nbn.org.uk/Terms By using this package you are agreeing to the Gateway Terms & Conditions and Privacy Policy. This message can be suppressed using the acceptTandC argument') 
+    if(!acceptTandC) message('IMPORTANT: By using this package you are agreeing to the Gateway Terms & Conditions and Privacy Policy (see https://data.nbn.org.uk/Terms). This message can be suppressed using the acceptTandC argument') 
     
     return(d_master)
 }
