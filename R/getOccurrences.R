@@ -7,6 +7,7 @@
 #' group.
 #'
 #' @export
+#' @importFrom stats na.omit
 #' @param tvks a list of TVKs which are strings of 16 alphanumeric characters.
 #' You can look these up using \code{getTVKQuery}
 #' @param datasets a list of dataset keys which are strings of 8 alphanumeric 
@@ -20,6 +21,11 @@
 #' within reptiles. Therefore it may be preferrable to search using a list TVKs aquired
 #' using getTVKQuery
 #' @param gridRef a string giving a gridreference in which to search for occurrences
+#' @param polygon A WKT (Well-Known Text) polygon string. Note that polygons containing
+#' many verticies (>100) are likely to create queries that exceed the NBN character limit
+#' @param point A vector of two numbers; latitude, longitude. Used with \code{radius}.
+#' @param radius A numeric distance, in meters used with \code{point} to create a circular
+#' search area.
 #' @param latLong logical, if TRUE latitude and longitude are returned as additional columns.
 #' The conversion to latitude and longitude is currently accurate to about about ~20 meters,
 #' greater than the vast majoring of records' precision.
@@ -29,6 +35,7 @@
 #' @param silent If \code{TRUE} batch request information is supressed
 #' @param attributes If \code{FALSE} then attribute data is not returned, this may
 #' improve the speed of large requests.
+#' @param ... Further named parameters passed on to \code{\link[httr]{GET}}
 #' @return a data.frame of occurence records. Details of the data providers that 
 #' contributed to the data returned is given as a 'providers' attribute
 #' @author Stuart Ball, JNCC \email{stuart.ball@@jncc.gov.uk} and Tom August, CEH \email{tomaug@@ceh.ac.uk}
@@ -51,11 +58,17 @@
 #' 
 getOccurrences <- function(tvks=NULL, datasets=NULL, startYear=NULL, 
                            endYear=NULL, VC=NULL, group=NULL, gridRef=NULL,
+                           polygon = NULL, point = NULL, radius = 5000,
                            latLong = TRUE, acceptTandC=FALSE, silent=FALSE,
-                           attributes = FALSE) {
+                           attributes = FALSE, ...) {
     
     if(!is.null(tvks) & !is.null(group)) stop('group and tvks cannot be used at the same time')
-    if(is.null(tvks) & is.null(group) & is.null(gridRef)) stop('One of group, tvks or gridRef must be given')
+    if(is.null(tvks) & is.null(group) & is.null(gridRef) & is.null(polygon) & is.null(point)) stop('One of group, tvks or gridRef must be given')
+    if(is.data.frame(tvks)){
+      if(!("ptaxonVersionKey" %in% names(tvks))) stop("ptaxonVersionKey column missing from data.frame tvks")
+    
+      tvks <- unique(as.character(tvks$ptaxonVersionKey))
+    } 
     
     # If we are searching by group get the group tvks
     if(!is.null(group)) tvks <- getGroupSpeciesTVKs(group)
@@ -70,6 +83,12 @@ getOccurrences <- function(tvks=NULL, datasets=NULL, startYear=NULL,
         nTVK <- 1
     }
     
+    # If we are using a polygon we cannot have point
+    if(!is.null(polygon) & !is.null(point)) stop('polygon and point cannot be used at the same time')
+    
+    # Create a polygon from point and radius if desired
+    if(!is.null(point)) polygon <- createWKT(point[1], point[2], radius)
+    
     start <- 1
     d_master <- NULL
     
@@ -80,9 +99,16 @@ getOccurrences <- function(tvks=NULL, datasets=NULL, startYear=NULL,
         if(!is.null(tvks)){temp_tvks <-  na.omit(tvks[start:end])}else{temp_tvks=NULL}
         
         ## return a JSON object (list of lists)
-        json <- runnbnurl(service="obs", tvks=temp_tvks, datasets=datasets, 
-                          startYear=startYear, endYear=endYear, VC=VC,
-                          gridRef=gridRef, attributes=attributes) 
+        json <- runnbnurl(service = "obs",
+                          tvks = temp_tvks,
+                          datasets = datasets,
+                          startYear = startYear,
+                          endYear = endYear,
+                          VC = VC,
+                          gridRef = gridRef,
+                          polygon = polygon,
+                          attributes = attributes,
+                          ... = ...) 
         
         if (length(json) > 0) {
             ## find the unique names that are used in occ

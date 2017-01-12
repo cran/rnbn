@@ -6,6 +6,7 @@
 #' @param datasets A string (or list of strings) giving the dataset keys to search within.
 #' Use \code{\link{listDatasets}} to find dataset keys, or visit the NBN gateway
 #' \url{https://data.nbn.org.uk/Datasets}
+#' @param ... Further named parameters passed on to \code{\link[httr]{GET}}
 #' @return a data.frame giving the details of data providers 
 #' @author Stuart Ball, JNCC \email{stuart.ball@@jncc.gov.uk} and Tom August, CEH \email{tomaug@@ceh.ac.uk}
 #' @seealso \code{\link{listDatasets}}
@@ -15,7 +16,7 @@
 #' 
 #' }
 #' 
-dataProviders <- function(datasets=NULL) {
+dataProviders <- function(datasets=NULL, ...) {
     
     # A function for removing html from strings
     cleanFun <- function(htmlString) {
@@ -33,7 +34,7 @@ dataProviders <- function(datasets=NULL) {
         
     for(dataset in datasets){
         
-        json <- runnbnurl(service="p", datasets=dataset)
+        json <- runnbnurl(service="p", datasets=dataset, ... = ...)
         
         if (length(json) > 0 & class(json) == 'list'){
             
@@ -66,11 +67,19 @@ dataProviders <- function(datasets=NULL) {
                 }
             }
         
-        if(is.null(org_master)){org_master <- organisation} else{org_master <- merge(org_master, organisation, all = TRUE)}
-    
+        if(is.null(org_master)){
+          
+          org_master <- organisation
+          
         } else {
-            warning(paste('Dataset',dataset,'returned no taxa, check this is spelt correctly'))            
+          
+          org_master <- merge(org_master, organisation, all = TRUE)
+          
         }
+    
+      } else {
+          warning(paste('Dataset',dataset,'returned no taxa, check this is spelt correctly'))            
+      }
     }    
     
     # If we have some data do some tidying up

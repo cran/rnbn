@@ -1,0 +1,63 @@
+context("Test gridRef")
+test_that("Valid grid ref", {
+    expect_identical(gridRef("NZ16", "sq10km")$gfmt, "NZ16")
+    expect_identical(gridRef("NZ16S", "sq10km")$gfmt, "NZ16")
+    expect_identical(gridRef("NZ1265", "sq10km")$gfmt, "NZ16")
+    expect_identical(gridRef("NZ123654", "sq10km")$gfmt, "NZ16")
+    expect_identical(gridRef("NZ12346543", "sq10km")$gfmt, "NZ16")
+    expect_identical(gridRef("NZ1234565432", "sq10km")$gfmt, "NZ16")
+    expect_identical(gridRef("N16", "sq10km")$gfmt, "N16")
+    expect_identical(gridRef("N16S", "sq10km")$gfmt, "N16")
+    expect_identical(gridRef("N1265", "sq10km")$gfmt, "N16")
+    expect_identical(gridRef("N123654", "sq10km")$gfmt, "N16")
+    expect_identical(gridRef("N12346543", "sq10km")$gfmt, "N16")
+    expect_identical(gridRef("N1234565432", "sq10km")$gfmt, "N16")
+    expect_error(gridRef("NZ12", "hectad"), "'arg' should be one of *")
+    expect_error(gridRef("NZ123", "sq10km"), "must be an even number of digits")
+    expect_error(gridRef("NZ123-", "sq10km"), "not a valid grid reference string")
+    expect_error(gridRef("N123", "sq10km"), "must be an even number of digits")
+    expect_error(gridRef("A12", "sq10km"), "not a valid grid reference string")
+    expect_error(gridRef("PZ1234", "sq10km"), "not a valid grid reference string")
+    expect_error(gridRef("NZ12SW", "sq10km"), "not a valid grid reference string")
+})
+
+test_that("Conversions work as expected", {
+    expect_identical(gridRef("NZ123654", "sq10km")$gfmt, "NZ16")     
+    expect_identical(gridRef("NZ123654", "sq1km")$gfmt, "NZ1265")     
+    expect_identical(gridRef("NZ1234565432", "sq100m")$gfmt, "NZ123654")     
+    expect_identical(gridRef("NZ1234565432", "sq10m")$gfmt, "NZ12346543")     
+    expect_identical(gridRef("NZ1234565432", "tetrad")$gfmt, "NZ16H")     
+    expect_identical(gridRef("NZ1234565432", "sq5km")$gfmt, "NZ16NW")     
+    expect_identical(gridRef("TL2982", "tetrad")$gfmt, "TL28W")     
+    expect_identical(gridRef("TL2982", "sq5km")$gfmt, "TL28SE")     
+    expect_identical(gridRef("TL2087", "tetrad")$gfmt, "TL28D")     
+    expect_identical(gridRef("TL201837", "sq5km")$gfmt, "TL28SW")     
+    expect_identical(gridRef("T2781", "tetrad")$gfmt, "T28Q")     
+    expect_identical(gridRef("T270890", "sq5km")$gfmt, "T28NE")     
+    expect_identical(gridRef("TL0000", "tetrad")$gfmt, "TL00A")     
+    expect_identical(gridRef("TL0000", "sq5km")$gfmt, "TL00SW")     
+})
+
+test_that("NULL returned if conversion not possible", {
+    expect_that(is.null(gridRef("NZ16", "sq1km")), is_true())   
+    expect_that(is.null(gridRef("NZ16", "tetrad")), is_true())   
+    expect_that(is.null(gridRef("N16", "sq5km")), is_true())   
+    expect_that(is.null(gridRef("NZ1265", "sq100m")), is_true())   
+    expect_that(is.null(gridRef("NZ123654", "sq10m")), is_true())   
+})
+
+g <- gridRef("NZ123654", "tetrad")
+test_that("returned structure is as extpected", {
+    expect_that(g, is_a("gridref"))  
+    expect_that(g$system, equals("OSGB"))
+    expect_that(g$precision, equals(2000))
+})
+
+g <- gridRef("N1265", "sq10km")
+test_that("returned structure is as extpected for Irish grid", {
+    expect_that(g, is_a("gridref"))  
+    expect_that(g$system, equals("OSNI"))
+    expect_that(g$precision, equals(10000))
+})
+
+    

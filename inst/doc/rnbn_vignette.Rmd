@@ -28,8 +28,8 @@ occurrences have been recorded) given its 'featureID'.
 * `getGroupSpeciesTVKs` given the name of a group (see `listGroups`)
 this function returns the pTVKs (preferred taxon version keys) for all members
 of that group. This is currently restricted to returning up to 5000 results.
-* `getOccurrences` get occurrences for a particular taxa, grid cell or
-species group and returns a data.frame containing the occurrences. Optionally,
+* `getOccurrences` get occurrences for a particular taxa, grid cell,
+species group, or polygon and returns a data.frame containing the occurrences. Optionally,
 the results can be filtered by dataset, date and vicecounty.
 * `getTaxonomy` given a TVK, this function gets details of the taxonomic
 hierarchy of a taxon.
@@ -88,6 +88,10 @@ install.packages('rnbn')
 ```r
 # Load the package
 library(rnbn)
+```
+
+```
+## The NBN is moving to new APIs in 2017, as a result this package will stop working at the end of March 2017. A new package will be created for the new APIs. For more information see https://github.com/ropensci/rnbn/issues/37
 ```
 
 
@@ -177,17 +181,17 @@ occ[1:10,c("pTaxonName", "startDate",
 ```
 
 ```
-##        pTaxonName  startDate latitude   longitude
-## 1  Tropidia scita 1999-06-16 53.96629 -2.74077385
-## 2  Tropidia scita 1999-06-13 54.17269 -2.79041559
-## 3  Tropidia scita 1999-06-16 53.95730 -2.74061447
-## 4  Tropidia scita 1999-06-18 54.11877 -2.78938893
-## 5  Tropidia scita 2003-07-19 52.25042  1.60990207
-## 6  Tropidia scita 2003-07-15 52.31187  1.65893247
-## 7  Tropidia scita 2003-07-13 52.37498  1.01754937
-## 8  Tropidia scita 2003-07-16 52.25131  1.58066354
-## 9  Tropidia scita 2005-05-31 52.94603 -0.05926616
-## 10 Tropidia scita 2005-05-31 53.05868  0.18456629
+##        pTaxonName  startDate latitude longitude
+## 1  Tropidia scita 1990-05-28 50.71863 -2.015530
+## 2  Tropidia scita 1994-06-30 50.84450 -1.930352
+## 3  Tropidia scita 1988-01-01 51.67065 -4.093176
+## 4  Tropidia scita 1985-01-01 51.70143 -4.275503
+## 5  Tropidia scita 1985-01-01 51.72432 -4.368601
+## 6  Tropidia scita 1997-06-11 51.72167 -4.298238
+## 7  Tropidia scita 1983-01-01 51.70143 -4.275503
+## 8  Tropidia scita 1995-01-01 51.68982 -4.294454
+## 9  Tropidia scita 1986-01-01 52.55561 -3.925584
+## 10 Tropidia scita 1986-01-01 51.72698 -4.302852
 ```
 
 
@@ -237,22 +241,82 @@ occ[1:10, c("pTaxonName", "location")]
 ```
 
 ```
-##                    pTaxonName location
-## 1            Ischnura elegans   TL3490
-## 2            Erythromma najas   TL3490
-## 3       Orthetrum cancellatum   TL3490
-## 4              Talpa europaea   TL3490
-## 5      Homalothecium sericeum TL342906
-## 6    Bryum bicolor sensu lato TL342905
-## 7  Rhytidiadelphus squarrosus TL340906
-## 8         Ceratodon purpureus TL340906
-## 9         Ceratodon purpureus TL340906
-## 10         Dicranum scoparium TL340906
+##               pTaxonName location
+## 1       Erythromma najas   TL3490
+## 2         Aeshna grandis   TL3490
+## 3          Aeshna cyanea   TL3490
+## 4           Aeshna mixta   TL3490
+## 5  Orthetrum cancellatum   TL3490
+## 6   Sympetrum striolatum   TL3490
+## 7   Sympetrum sanguineum   TL3490
+## 8       Ischnura elegans   TL3490
+## 9         Talpa europaea   TL3490
+## 10      Bryum dichotomum TL342905
 ```
 
 
 This search will work with a range of grid reference resolutions and for grid references in OSNI and OSGB format.
 
+### Using polygons
+
+You might wish to search within a polygon rather than a grid reference. This is supported through the use of well-known text format polygons. You can create these using the package `rgeos` R packages (see function `writeWKT`), or [via websites](http://arthur-e.github.io/Wicket/sandbox-gmaps3.html)
+
+
+```r
+# Create a WKT polygon
+# This is a small square polygon in Oxfordshire
+myPolygon <- "POLYGON((-1.120305061340332 51.60510713031779,-1.1186742782592773 51.590978433037144,-1.098933219909668 51.59129837670387,-1.0994482040405273 51.604840591807104,-1.120305061340332 51.60510713031779))"
+
+# Retrieve data from NBN using a polygon
+occ <- getOccurrences(polygon = myPolygon,
+                      silent = TRUE,
+                      acceptTandC = TRUE)
+
+occ[1:10, c("pTaxonName", "location")]
+```
+
+```
+##                             pTaxonName location
+## 1  Sympherobius (Sympherobius) elegans     SU68
+## 2                  Cynosurus cristatus     SU68
+## 3                 Hypericum perforatum     SU68
+## 4                 Centaurium erythraea     SU68
+## 5           Euphrasia officinalis agg.     SU68
+## 6                   Crataegus monogyna     SU68
+## 7                 Pimpinella saxifraga     SU68
+## 8                     Bromopsis erecta     SU68
+## 9                     Carlina vulgaris     SU68
+## 10                         Viola hirta     SU68
+```
+
+
+### Using a point and radius
+
+You might wish to search for records witin a radius of a certain location, for this you can use the `point` and `radius` arguements.
+
+The point is given as a numeric vector of length two, latitude then longitude (e.g. `c(51.6011023, -1.1278673)`). You can also supply a radius in meters. With this information rnbn will search for records that fall within a circular area around your point with the given radius.
+
+
+```r
+# Retrieve data from NBN using a point and radius
+occ <- getOccurrences(point = c(51.603181, -1.109945),
+                      radius = 1000,
+                      silent = TRUE,
+                      acceptTandC = TRUE)
+
+# Where do these records come from?
+head(sort(table(occ$siteName), decreasing = TRUE))
+```
+
+```
+## 
+##       Site name unavailable                 Oxfordshire 
+##                        5437                         238 
+##         Site name protected             CEH Wallingford 
+##                         218                         194 
+##                 Wallingford Crowmarsh Recreation ground 
+##                         110                          86
+```
 
 ### Using species group
 
@@ -307,13 +371,27 @@ head(datasets[45:50,]) # I select a group with short titles
 ```
 
 ```
-##                                             title      key
-## 46 Bedfordshire Butterflies (BNHS/BC) - 1976-2013 GA000481
-## 47     Bedfordshire Coleoptera (BNHS) - 1986-2013 GA000674
-## 48      Bedfordshire Diplopoda (BNHS) - 1975-1985 GA000675
-## 49   Bedfordshire Dormice (BNHS/BDG) -  2000-2012 GA000703
-## 50          Bedfordshire Fish (BNHS) -  1800-2013 GA000704
-## 51     Bedfordshire Flora (BNHS/BSBI) - 1904-2013 GA000482
+##                                                     title      key
+## 45              Bedfordshire Diplopoda (BNHS) - 1975-1985 GA000675
+## 46           Bedfordshire Dormice (BNHS/BDG) -  2000-2014 GA000703
+## 47                  Bedfordshire Fish (BNHS) -  1800-2015 GA000704
+## 48             Bedfordshire Flora (BNHS/BSBI) - 1904-2013 GA000482
+## 49      Bedfordshire Herpetofauna (BNHS/BRAG) - 1973-2016 GA000458
+## 50 Bedfordshire Himalayan Balsam Surveys (WT) - 2010-2012 GA001205
+##                                                                                                                                                                                                                                                                              description
+## 45                                                                                                                                                                                                                                                                Diplopoda (Millipedes)
+## 46                                                                                                                                                              Hazel/Common Dormouse (Muscardinus avellanarius) (There are no Edible Dormouse (Glis glis) records within this dataset).
+## 47                                                                                                                                                                                                                                                                                 Fish.
+## 48                                                                                                                                                                                                                                Vascular plants, ferns and fern allies species records
+## 49                                                                                                                                                                                                                                                Reptile and Amphibian species records.
+## 50 Field surveys in the River Flit Valley were undertaken during the summers of 2010 to 2012 to map the distribution and abundance of Himalayan Balsam (Impatiens glandulifera). Where none was found this was recorded, in addition to three levels of abundance low, medium and high).
+##                                         href datasetLicence
+## 45 https://data.nbn.org.uk/Datasets/GA000675           <NA>
+## 46 https://data.nbn.org.uk/Datasets/GA000703           <NA>
+## 47 https://data.nbn.org.uk/Datasets/GA000704           <NA>
+## 48 https://data.nbn.org.uk/Datasets/GA000482           <NA>
+## 49 https://data.nbn.org.uk/Datasets/GA000458           <NA>
+## 50 https://data.nbn.org.uk/Datasets/GA001205           <NA>
 ```
 
 
@@ -441,13 +519,27 @@ WCresults[10:15,c('observationID','attributes.Comment',
 ```
 
 ```
-##    observationID    attributes.Comment attributes.SampleMethod
-## 10     219705983                  <NA>                    <NA>
-## 11     219706660                  <NA>                    <NA>
-## 12     365453294 Reported to recorder.       Field Observation
-## 13     365459000 Track/trail. VC: 108.       Field Observation
-## 14     365460230                             Field Observation
-## 15     365460484                 Seen.       Field Observation
+##    observationID
+## 10     517022722
+## 11     517023627
+## 12     517025692
+## 13     517027077
+## 14     517034379
+## 15     517039499
+##                                                        attributes.Comment
+## 10                                                         Seen. VC: 108.
+## 11                                                  Track/trail. VC: 108.
+## 12                                                                       
+## 13                                                                       
+## 14 Tracks/trail. Ref: Swan, P. (2000). field records. From IMAG database.
+## 15                                                                  Seen.
+##    attributes.SampleMethod
+## 10       Field Observation
+## 11       Field Observation
+## 12       Field Observation
+## 13       Field Observation
+## 14       Field Observation
+## 15       Field Observation
 ```
 
 
